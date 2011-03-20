@@ -21,7 +21,30 @@
 #include <geekos/timer.h>
 #include <geekos/keyboard.h>
 
+void Hello_Thread (ulong_t arg)
+{
+    Print("Hello from Rafael\n");
 
+    Keycode keycode = 0;
+
+    /*
+     * Print every character typed in the screen
+    */
+    do
+    {
+        keycode = Wait_For_Key();
+
+        /*
+        * Do not print when it is a key release event
+        */
+        if (!(keycode & KEY_RELEASE_FLAG))
+        {
+            Put_Char (keycode);
+        }
+    } while (keycode != (KEY_CTRL_FLAG | (Keycode) 'd'));
+    
+    Print("\nGoodbye from Rafael\n");
+}
 
 
 /*
@@ -48,8 +71,7 @@ void Main(struct Boot_Info* bootInfo)
     Set_Current_Attr(ATTRIB(BLACK, GRAY));
 
 
-    TODO("Start a kernel thread to echo pressed keys and print counts");
-
+    Start_Kernel_Thread(Hello_Thread, 0, PRIORITY_NORMAL, false );
 
 
     /* Now this thread is done. */
