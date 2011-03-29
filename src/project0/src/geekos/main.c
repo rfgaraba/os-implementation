@@ -21,6 +21,8 @@
 #include <geekos/timer.h>
 #include <geekos/keyboard.h>
 
+#define CTRL_D (KEY_CTRL_FLAG | (Keycode) 'd')
+
 void Hello_Thread (ulong_t arg)
 {
     Print("Hello from Rafael\n");
@@ -37,11 +39,12 @@ void Hello_Thread (ulong_t arg)
         /*
         * Do not print when it is a key release event
         */
-        if (!(keycode & KEY_RELEASE_FLAG))
+        if (!(keycode & (KEY_RELEASE_FLAG | KEY_SPECIAL_FLAG)) 
+            && keycode != CTRL_D)
         {
             Put_Char (keycode);
         }
-    } while (keycode != (KEY_CTRL_FLAG | (Keycode) 'd'));
+    } while (keycode != CTRL_D);
     
     Print("\nGoodbye from Rafael\n");
 }
