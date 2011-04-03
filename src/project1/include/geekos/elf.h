@@ -87,5 +87,31 @@ struct Exe_Format {
 int Parse_ELF_Executable(char *exeFileData, ulong_t exeFileLength,
     struct Exe_Format *exeFormat);
 
+
+/*
+ * ELF file types 
+ */
+#define ET_NONE     0       /* No file type */
+#define ET_REL      1       /* Relocatable file */
+#define ET_EXEC     2       /* Executable file */
+#define ET_DYN      3       /* Shared object file */
+#define ET_CORE     4       /* Core file */
+#define ET_LOPROC   0xff00  /* Processor-specific */
+#define ET_HIPROC   0xffff  /* Processor-specific */
+
+/*
+ * ELF machine types 
+ */
+enum e_machine {
+    EM_NONE = 0,    /* No Machine */
+    EM_M32,         /* AT&T WE 32100 */
+    EM_SPARC,       /* SPARC */
+    EM_386,         /* Intel 80386 */
+    EM_68K,         /* Motorola 68000 */
+    EM_88k,         /* Motorola 88000 */
+    EM_860 = 7,     /* Intel 80860 */
+    EM_MIPS = 8,    /* MIPS RS3000 */
+};
+
 #endif  /* GEEKOS_ELF_H */
 
