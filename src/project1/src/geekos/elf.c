@@ -17,6 +17,7 @@
 #include <geekos/string.h>
 #include <geekos/elf.h>
 
+
 /**
  * Prints the contents of the ELF header
  * @param elfHeaderSection structure describing the Elf Header
@@ -47,15 +48,6 @@ void Print_ELF_Header ( const elfHeader *header)
    
 }
 
-/**
- * From the data of an ELF executable, clean the allocated space 
- * for the table
- * @param programHeader structure array that will be cleaned 
- */
-void Clean_ELF_Program_Header_Table ( programHeader * programHeaderTable)
-{
-    Free(programHeaderTable);
-}
 
 
 /**
@@ -78,18 +70,14 @@ int Get_ELF_Program_Header_Table (const char *exeFileData,
     int programHeaderTableSize = elfHeaderSection->phnum * 
         elfHeaderSection->phentsize;
 
-    KASSERT(programHeaderTable == NULL); /* To avoid any possibility of 
-                                        previously allocated memory*/
-
-    programHeaderTable = Malloc(programHeaderTableSize);
-    if (programHeaderTable != NULL)
+    if (programHeaderTable != NULL && elfHeaderSection->phnum <= EXE_MAX_SEGMENTS )
     {   
         memcpy(programHeaderTable, programTableAddress, programHeaderTableSize);
         retValue = 0; 
     }
     else
     {
-        retValue = ENOMEM;
+        retValue = EINVALID;
     }
     return retValue;
 }
@@ -108,13 +96,11 @@ int Parse_ELF_Header(const char *exeFileData, ulong_t exeFileLength,
     
     int retValue; /* Return Value */
     memcpy(elfHeaderSection, exeFileData, sizeof(elfHeader));
-    Print_ELF_Header(elfHeaderSection);
+    /* Print_ELF_Header(elfHeaderSection); */
     if (elfHeaderSection->type == ET_EXEC)
     {
-        Print ("DBG: File is an Executable file\n");
         if (elfHeaderSection->machine == EM_386)
         {   
-            Print ("DBG: ELF file is for 80386 \n");
             retValue = 0;
         }
         else
@@ -148,7 +134,7 @@ int Parse_ELF_Executable(char *exeFileData, ulong_t exeFileLength,
 {
     int retValue; /* Return Value */
     elfHeader * elfHeaderSection = NULL;
-    programHeader * elfProgramHeaderTable = NULL;
+    programHeader programHeaderTable[EXE_MAX_SEGMENTS];
 
     if (exeFileData != NULL && exeFileLength != 0 && exeFormat != NULL)
     {
@@ -156,10 +142,29 @@ int Parse_ELF_Executable(char *exeFileData, ulong_t exeFileLength,
             elfHeaderSection);
         if (retValue == 0)
         {   
-            Get_ELF_Program_Header_Table(exeFileData, exeFileLength, 
-                elfHeaderSection, elfProgramHeaderTable);
-            TODO("Parse an ELF executable image");
-            Clean_ELF_Program_Header_Table(elfProgramHeaderTable);
+            int i; 
+            retValue = Get_ELF_Program_Header_Table(exeFileData, exeFileLength, 
+                elfHeaderSection, programHeaderTable);
+            
+            if (retValue == 0)
+            {
+                exeFormat->entryAddr = elfHeaderSection->entry;
+                exeFormat->numSegments = elfHeaderSection->phnum;
+                for (i=0; i<elfHeaderSection->phnum; i++)
+                {
+                    exeFormat->segmentList[i].offsetInFile = 
+                            programHeaderTable[i].offset;
+                    exeFormat->segmentList[i].lengthInFile = 
+                            programHeaderTable[i].fileSize;
+                    exeFormat->segmentList[i].startAddress = 
+                            programHeaderTable[i].vaddr;
+                    exeFormat->segmentList[i].sizeInMemory = 
+                            programHeaderTable[i].memSize;
+                    exeFormat->segmentList[i].protFlags = 
+                            programHeaderTable[i].flags;
+                    
+                }
+            } 
         }
         /* else, retValue will be passed during return of function */
     }
